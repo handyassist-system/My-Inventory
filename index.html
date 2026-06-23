@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>家庭庫存管理</title>
-<script src="https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/twemoji.min.js" crossorigin="anonymous"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 :root{
@@ -376,13 +375,25 @@ var customEmoji={};
 function loadCustomEmoji(){try{var r=localStorage.getItem(CUSTOM_EMOJI_KEY);if(r)customEmoji=JSON.parse(r);}catch(e){customEmoji={};}}
 function saveCustomEmoji(){try{localStorage.setItem(CUSTOM_EMOJI_KEY,JSON.stringify(customEmoji));}catch(e){}}
 function getEmoji(name,cat){return customEmoji[name]||EMOJI_MAP[name]||CAT_EMOJI[cat]||'📦';}
+function emojiToPngUrl(emoji){
+  var codepoints=[];
+  for(var i=0;i<emoji.length;){
+    var code=emoji.codePointAt(i);
+    if(code!==0xFE0F) codepoints.push(code.toString(16));
+    i+=code>0xFFFF?2:1;
+  }
+  return 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/'+codepoints.join('-')+'.png';
+}
+
 function renderEmoji(emoji,size){
   size=size||36;
-  if(typeof twemoji==='undefined') return '<span class="fallback-emoji" style="font-size:'+(size*0.85)+'px">'+emoji+'</span>';
-  var url=twemoji.parse(emoji,{folder:'svg',ext:'.svg'});
-  var m=url.match(/src="([^"]+)"/);
-  if(m) return '<img src="'+m[1]+'" width="'+size+'" height="'+size+'" alt="'+emoji+'" onerror="this.style.display=\'none\';this.insertAdjacentHTML(\'afterend\',\'<span style=font-size:'+(size*0.8)+'px>'+emoji+'</span>\')">';
-  return '<span class="fallback-emoji" style="font-size:'+(size*0.85)+'px">'+emoji+'</span>';
+  // 離線（file://）直接用系統 emoji，避免破版
+  if(!navigator.onLine || location.protocol==='file:'){
+    return '<span style="font-size:'+(Math.round(size*0.85))+'px;line-height:1;display:inline-block">'+emoji+'</span>';
+  }
+  var url=emojiToPngUrl(emoji);
+  return '<img src="'+url+'" width="'+size+'" height="'+size+'" alt="'+emoji+'" '
+    +'onerror="this.style.display=\'none\';var s=document.createElement(\'span\');s.textContent=this.alt;s.style.fontSize=\''+(Math.round(size*0.8))+'px\';this.parentNode.insertBefore(s,this.nextSibling)">';
 }
 
 // ══════════════════════════════════
