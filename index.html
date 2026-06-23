@@ -232,6 +232,7 @@ input:checked+.slider:before{transform:translateX(18px)}
         <span class="chip chip-warn" id="hWarn" style="display:none"></span>
         <span class="chip chip-ok"   id="hTotal"></span>
         <button class="btn-header-add" onclick="openAdd()">＋ 新增</button>
+        <button onclick="window.open('https://mp65p.github.io/My-Schedule/','_blank')" style="border:none;background:none;font-size:18px;cursor:pointer;color:var(--ink3)" title="前往行事曆">📅</button>
         <button onclick="doLogout()" style="border:none;background:none;font-size:18px;cursor:pointer;color:var(--ink3)">⏏</button>
       </div>
     </div>
@@ -375,25 +376,9 @@ var customEmoji={};
 function loadCustomEmoji(){try{var r=localStorage.getItem(CUSTOM_EMOJI_KEY);if(r)customEmoji=JSON.parse(r);}catch(e){customEmoji={};}}
 function saveCustomEmoji(){try{localStorage.setItem(CUSTOM_EMOJI_KEY,JSON.stringify(customEmoji));}catch(e){}}
 function getEmoji(name,cat){return customEmoji[name]||EMOJI_MAP[name]||CAT_EMOJI[cat]||'📦';}
-function emojiToPngUrl(emoji){
-  var codepoints=[];
-  for(var i=0;i<emoji.length;){
-    var code=emoji.codePointAt(i);
-    if(code!==0xFE0F) codepoints.push(code.toString(16));
-    i+=code>0xFFFF?2:1;
-  }
-  return 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/'+codepoints.join('-')+'.png';
-}
-
 function renderEmoji(emoji,size){
   size=size||36;
-  // 離線（file://）直接用系統 emoji，避免破版
-  if(!navigator.onLine || location.protocol==='file:'){
-    return '<span style="font-size:'+(Math.round(size*0.85))+'px;line-height:1;display:inline-block">'+emoji+'</span>';
-  }
-  var url=emojiToPngUrl(emoji);
-  return '<img src="'+url+'" width="'+size+'" height="'+size+'" alt="'+emoji+'" '
-    +'onerror="this.style.display=\'none\';var s=document.createElement(\'span\');s.textContent=this.alt;s.style.fontSize=\''+(Math.round(size*0.8))+'px\';this.parentNode.insertBefore(s,this.nextSibling)">';
+  return '<span style="font-size:'+(Math.round(size*0.85))+'px;line-height:1;display:inline-block">'+emoji+'</span>';
 }
 
 // ══════════════════════════════════
@@ -428,21 +413,21 @@ var DEFAULT_CATEGORIES=[
   {id:'other',   icon:'📦',name:'其他',    items:[]},
 ];
 var DEFAULT_ITEMS=[
-  {id:'tp',     name:'衛生紙', cat:'daily',   unit:'包',qty:4,threshold:3,location:'浴室',  zone:'',      interval:30},
-  {id:'tissue', name:'面紙盒', cat:'daily',   unit:'盒',qty:3,threshold:2,location:'客廳',  zone:'零食櫃',interval:30},
-  {id:'trash',  name:'垃圾袋', cat:'daily',   unit:'包',qty:3,threshold:2,location:'廚房',  zone:'抽屜',  interval:30},
-  {id:'dish',   name:'洗碗精', cat:'home',    unit:'瓶',qty:2,threshold:1,location:'廚房',  zone:'流理台',interval:60},
-  {id:'laundry',name:'洗衣精', cat:'home',    unit:'瓶',qty:2,threshold:1,location:'浴室',  zone:'櫃子',  interval:45},
-  {id:'shampoo',name:'洗髮精', cat:'personal',unit:'瓶',qty:2,threshold:1,location:'浴室',  zone:'檯面',  interval:45},
-  {id:'toothp', name:'牙膏',   cat:'personal',unit:'條',qty:2,threshold:1,location:'浴室',  zone:'檯面',  interval:60},
-  {id:'rice',   name:'白米',   cat:'grain',   unit:'包',qty:2,threshold:1,location:'廚房',  zone:'櫥櫃',  interval:14},
-  {id:'oil',    name:'食用油', cat:'sauce',   unit:'瓶',qty:2,threshold:1,location:'廚房',  zone:'流理台',interval:60},
-  {id:'soy',    name:'醬油',   cat:'sauce',   unit:'瓶',qty:2,threshold:1,location:'廚房',  zone:'流理台',interval:90},
-  {id:'egg',    name:'雞蛋',   cat:'veg',     unit:'盒',qty:2,threshold:1,location:'廚房',  zone:'冷藏',  interval:7},
-  {id:'milk',   name:'牛奶',   cat:'drink',   unit:'瓶',qty:3,threshold:2,location:'廚房',  zone:'冷藏',  interval:7},
-  {id:'water',  name:'礦泉水', cat:'drink',   unit:'箱',qty:2,threshold:1,location:'客廳',  zone:'',      interval:14},
-  {id:'mask',   name:'口罩',   cat:'medical', unit:'盒',qty:2,threshold:1,location:'書房',  zone:'書桌',  interval:90},
-  {id:'bat',    name:'3號電池',cat:'repair',  unit:'包',qty:2,threshold:1,location:'客廳',  zone:'電視櫃',interval:90},
+  {id:'toilet_paper',    name:'衛生紙', cat:'daily',   unit:'包',qty:4,threshold:3,location:'浴室',  zone:'',      interval:30},
+  {id:'tissue_box',      name:'面紙盒', cat:'daily',   unit:'盒',qty:3,threshold:2,location:'客廳',  zone:'零食櫃',interval:30},
+  {id:'trash_bag',       name:'垃圾袋', cat:'daily',   unit:'包',qty:3,threshold:2,location:'廚房',  zone:'抽屜',  interval:30},
+  {id:'dish_soap',       name:'洗碗精', cat:'home',    unit:'瓶',qty:2,threshold:1,location:'廚房',  zone:'流理台',interval:60},
+  {id:'laundry_detergent',name:'洗衣精',cat:'home',    unit:'瓶',qty:2,threshold:1,location:'浴室',  zone:'櫃子',  interval:45},
+  {id:'shampoo',         name:'洗髮精', cat:'personal',unit:'瓶',qty:2,threshold:1,location:'浴室',  zone:'檯面',  interval:45},
+  {id:'toothpaste',      name:'牙膏',   cat:'personal',unit:'條',qty:2,threshold:1,location:'浴室',  zone:'檯面',  interval:60},
+  {id:'white_rice',      name:'白米',   cat:'grain',   unit:'包',qty:2,threshold:1,location:'廚房',  zone:'櫥櫃',  interval:14},
+  {id:'cooking_oil',     name:'食用油', cat:'sauce',   unit:'瓶',qty:2,threshold:1,location:'廚房',  zone:'流理台',interval:60},
+  {id:'soy_sauce',       name:'醬油',   cat:'sauce',   unit:'瓶',qty:2,threshold:1,location:'廚房',  zone:'流理台',interval:90},
+  {id:'egg',             name:'雞蛋',   cat:'veg',     unit:'盒',qty:2,threshold:1,location:'廚房',  zone:'冷藏',  interval:7},
+  {id:'milk',            name:'牛奶',   cat:'drink',   unit:'瓶',qty:3,threshold:2,location:'廚房',  zone:'冷藏',  interval:7},
+  {id:'water',           name:'礦泉水', cat:'drink',   unit:'箱',qty:2,threshold:1,location:'客廳',  zone:'',      interval:14},
+  {id:'mask',            name:'口罩',   cat:'medical', unit:'盒',qty:2,threshold:1,location:'書房',  zone:'書桌',  interval:90},
+  {id:'bat_aa',          name:'3號電池',cat:'repair',  unit:'包',qty:2,threshold:1,location:'客廳',  zone:'電視櫃',interval:90},
 ];
 
 // ══════════════════════════════════
@@ -525,6 +510,33 @@ function loadData(){
   try{var c=localStorage.getItem(CAT_KEY); if(c)categories=JSON.parse(c);}catch(e){categories=[];}
   try{var f=localStorage.getItem(FAV_KEY); if(f)favs=JSON.parse(f);}catch(e){favs=[];}
   loadCustomEmoji();
+  // 舊 id → 新 id 對照，移除舊版重複資料
+  var OLD_ID_MAP={
+    'tp':'toilet_paper','tissue':'tissue_box','trash':'trash_bag',
+    'dish':'dish_soap','laundry':'laundry_detergent','toothp':'toothpaste',
+    'rice':'white_rice','oil':'cooking_oil','soy':'soy_sauce',
+    'bat':'bat_aa','egg':'egg','milk':'milk','water':'water','mask':'mask'
+  };
+  // 若新 id 已存在，刪除舊 id 的重複項
+  Object.keys(OLD_ID_MAP).forEach(function(oldId){
+    var newId=OLD_ID_MAP[oldId];
+    var hasOld=items.find(function(i){return i.id===oldId;});
+    var hasNew=items.find(function(i){return i.id===newId;});
+    if(hasOld && hasNew){
+      // 兩個都有 → 刪舊的
+      items=items.filter(function(i){return i.id!==oldId;});
+    } else if(hasOld && !hasNew){
+      // 只有舊的 → 把 id 改成新的
+      hasOld.id=newId;
+    }
+  });
+  // 依名稱去除重複（保留第一筆）
+  var seenNames={};
+  items=items.filter(function(it){
+    if(seenNames[it.name]) return false;
+    seenNames[it.name]=true;
+    return true;
+  });
   DEFAULT_LOCATIONS.forEach(function(dl){
     if(!locations.find(function(l){return l.id===dl.id;}))
       locations.push({id:dl.id,name:dl.name,zones:dl.zones.slice()});
@@ -879,6 +891,12 @@ function addToCalendar(id){
 }
 
 function pollDone(){
+  // 舊 id → 新 id 對照（向下相容）
+  var ID_MAP={
+    'tp':'toilet_paper','tissue':'tissue_box','trash':'trash_bag',
+    'dish':'dish_soap','laundry':'laundry_detergent','toothp':'toothpaste',
+    'rice':'white_rice','oil':'cooking_oil','soy':'soy_sauce','bat':'bat_aa'
+  };
   try{
     var raw=localStorage.getItem('inv_done_callbacks');
     if(!raw)return;
@@ -887,7 +905,11 @@ function pollDone(){
     localStorage.removeItem('inv_done_callbacks');
     var changed=false;
     queue.forEach(function(cb){
-      var it=items.find(function(m){return m.id===cb.item_id;});
+      var itemId=cb.item_id;
+      // 嘗試舊 id 對照
+      if(!items.find(function(m){return m.id===itemId;})&&ID_MAP[itemId])
+        itemId=ID_MAP[itemId];
+      var it=items.find(function(m){return m.id===itemId;});
       if(!it)return;
       it.qty+=(cb.qty_added||1);
       it.lastBuy=cb.done_date||today();
@@ -1016,12 +1038,13 @@ function onAddCatChange(){
   var is3c=catId===CAT_3C;
   fn.style.display=is3c?'none':'';f3.style.display=is3c?'':'none';
   var cat=categories.find(function(c){return c.id===catId;});
+  // 全庫存已有名稱（不限分類）
+  var usedNames=new Set(items.map(function(i){return i.name;}));
   if(cat&&cat.items.length>0){
-    var usedNames=new Set(items.filter(function(i){return i.cat===catId;}).map(function(i){return i.name;}));
     document.getElementById('fItemPick').innerHTML='<option value="">請選擇商品</option>'
       +cat.items.map(function(item){
         var used=usedNames.has(item);
-        return '<option value="'+esc(item)+'"'+(used?' disabled style="color:#bbb"':'')+'>'+item+(used?' ✓':'')+'</option>';
+        return '<option value="'+esc(item)+'"'+(used?' disabled style="color:#bbb"':'')+'>'+item+(used?' ✓ 已加入':'')+'</option>';
       }).join('')+'<option value="__custom__">＋ 自行輸入</option>';
     ipf.style.display='';cnf.style.display='none';
   } else {ipf.style.display='none';cnf.style.display='';}
@@ -1097,6 +1120,10 @@ function saveItem(){
   else{name=itemVal;}
   if(!name){showToast('⚠️ 請輸入商品名稱');return;}
   if(!loc){showToast('⚠️ 請選擇存放區域');return;}
+  // 重複名稱檢查
+  if(items.find(function(i){return i.name===name;})){
+    showToast('⚠️「'+name+'」已存在庫存中');return;
+  }
   var ni={id:newId,name:name,cat:catId,location:loc,zone:zone,is3c:is3c};
   if(is3c){
     ni.model  =(document.getElementById('fModel')||{}).value||'';
