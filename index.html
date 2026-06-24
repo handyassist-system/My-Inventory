@@ -883,7 +883,7 @@ function updateQty(id,delta){
 
 function addToCalendar(id){
   var it=items.find(function(m){return m.id===id;});if(!it||it.is3c)return;
-  var qty=Math.max(1,(it.threshold*2)-it.qty);
+  var qty=Math.max(1,(it.threshold||0)-it.qty);   // 補到安全庫存（安全量−現有，最少1）
   localStorage.setItem('inv_pending_purchase',JSON.stringify({
     item_id:it.id,item_name:it.name,quantity:qty,unit:it.unit||'個',
     subcategory:['fruit','veg','meat','frozen','grain','sauce','canned','drink','snack'].indexOf(it.cat)>=0?'food':'daily',
