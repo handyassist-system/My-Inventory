@@ -919,7 +919,7 @@ function pollDone(){
       it.lastBuy=cb.done_date||today();
       changed=true;
       acks.push({item_name:it.name,qty_added:(cb.qty_added||1)});   // 回報行事曆
-      showToast('✅ 庫存更新：'+it.name+' +'+(cb.qty_added||1)+'（行事曆同步）');
+      showToast('✅ 庫存更新：'+it.name+' +'+(cb.qty_added||1)+'（行事曆同步）', 5000);
     });
     if(acks.length){   // 回報行事曆 → 行事曆會跳「✅ 回傳成功」
       var prevAck=[]; try{prevAck=JSON.parse(localStorage.getItem('inv_update_ack')||'[]');}catch(e){}
@@ -933,6 +933,9 @@ function pollDone(){
   }catch(e){}
 }
 setInterval(pollDone,3000);
+// 只在「分頁回到前景」時處理，確保「✅ 庫存更新」在你正看著的庫存分頁跳出（不在背景被吃掉）
+window.addEventListener('focus', pollDone);
+document.addEventListener('visibilitychange', function(){ if(!document.hidden) pollDone(); });
 
 // ══════════════════════════════════
 //  Sheet
@@ -1191,11 +1194,11 @@ function switchTab(tab){
 //  Toast
 // ══════════════════════════════════
 var _tt;
-function showToast(msg){
+function showToast(msg, ms){
   var t=document.getElementById('toast');
   document.getElementById('toastMsg').textContent=msg;
   t.classList.add('show');clearTimeout(_tt);
-  _tt=setTimeout(function(){t.classList.remove('show');},3000);
+  _tt=setTimeout(function(){t.classList.remove('show');}, ms||3000);
 }
 
 document.getElementById('editOverlay').addEventListener('click',function(e){if(e.target===e.currentTarget)closeSheet();});
