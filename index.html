@@ -64,6 +64,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);position:
 .item-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .item-card{background:var(--surface);border-radius:var(--radius-lg);border:1.5px solid var(--border);padding:10px 6px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:box-shadow .15s;position:relative;overflow:hidden}
 .item-card:hover{box-shadow:var(--shadow-md)}
+.item-card.pressing{transform:scale(.94);opacity:.7;transition:transform .15s,opacity .15s}
 .item-card.st-expired{border-color:var(--warn);background:var(--warn-light)}
 .item-card.st-low{border-color:var(--warn-mid)}
 .item-card.st-soon{border-color:#FCD34D;background:var(--yellow-light)}
@@ -80,6 +81,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);position:
 .db-orange{background:#ffedd5;color:#c2410c}
 .db-red{background:#fee2e2;color:#b91c1c}
 .use-soon{font-size:13px;font-weight:800;color:#dc2626;text-align:center;line-height:1.25;margin:1px 0 2px;white-space:nowrap}
+.item-card.lp-active{transform:scale(.9);box-shadow:0 0 0 3px #dc2626 inset,0 4px 12px rgba(220,38,38,.3);background:#fff1f1;transition:transform .12s}
 .item-emoji{width:44px;height:44px;display:flex;align-items:center;justify-content:center;margin-top:4px}
 .item-emoji img{width:36px;height:36px}
 .fallback-emoji{font-size:32px;line-height:1}
@@ -303,7 +305,7 @@ input:checked+.slider:before{transform:translateX(18px)}
         <div style="font-size:12px;color:var(--ink3);margin-bottom:8px">可自訂各商品的 emoji 圖示。</div>
         <div id="emojiSettingsList"></div>
       </div>
-      <div style="text-align:center;color:var(--ink3);font-size:12px;padding:10px 0 4px">庫存管理　版本 v54</div>
+      <div style="text-align:center;color:var(--ink3);font-size:12px;padding:10px 0 4px">庫存管理　版本 v58</div>
     </div>
   </div>
 
@@ -582,16 +584,31 @@ function loadData(){
       hasOld.id=newId;
     }
   });
-  // 依名稱去除重複（保留第一筆）
-  var seenNames={};
-  items=items.filter(function(it){
-    if(seenNames[it.name]) return false;
-    seenNames[it.name]=true;
-    return true;
+  // 同名同位置合併（數量相加）→ 根治「兩筆同品項，回傳加到看不到的那筆」
+  var _mkey=function(it){ return (it.name||'').replace(/\s/g,'')+'@@'+(it.location||'')+'@@'+(it.zone||''); };
+  var byName={}, merged=[];
+  items.forEach(function(it){
+    var k=_mkey(it);
+    if(byName[k]){
+      var keep=byName[k];
+      keep.qty=(keep.qty||0)+(it.qty||0);              // 數量相加
+      if(!keep.lastBuy && it.lastBuy) keep.lastBuy=it.lastBuy;
+      if(!keep.expiry  && it.expiry ) keep.expiry =it.expiry;
+      if(keep.keepDays==null && it.keepDays!=null) keep.keepDays=it.keepDays;
+      if(keep.interval==null && it.interval!=null) keep.interval=it.interval;
+    }else{ byName[k]=it; merged.push(it); }
+  });
+  items=merged;
+  // 修復重複或缺失的 id（根治：長按刪除、＋／− 都會因 id 重複而改錯品項）
+  var seenIds={}, _idFixed=false;
+  items.forEach(function(it){
+    if(!it.id || seenIds[it.id]){ it.id=uid(); _idFixed=true; }
+    seenIds[it.id]=true;
   });
   // 舊品項沒有購買日 → 補今天（之後就能算「放了幾天」；新品項本來就預設今天）
   var _td=today();
   items.forEach(function(it){ if(!it.is3c && !it.lastBuy){ it.lastBuy=_td; } });
+  if(_idFixed){ try{ saveData(); }catch(e){} }
   DEFAULT_LOCATIONS.forEach(function(dl){
     if(!locations.find(function(l){return l.id===dl.id;}))
       locations.push({id:dl.id,name:dl.name,zones:dl.zones.slice()});
@@ -704,12 +721,12 @@ function renderGrid(){
     var body=it.is3c
       ?'<div style="font-size:10px;color:var(--ink3);text-align:center;margin-top:2px">點擊查看</div>'
       :'<div class="item-qty '+qtyColor+'">'+it.qty+' <span class="item-unit">'+esc(it.unit||'')+'</span></div>'
-       +'<div class="item-qty-ctrl" onclick="event.stopPropagation()">'
+       +'<div class="item-qty-ctrl" onclick="event.stopPropagation()" onpointerdown="event.stopPropagation()">'
        +'<button class="item-qty-btn" onclick="updateQty(\''+it.id+'\',-1)">−</button>'
        +'<div class="item-qty-num">'+it.qty+'</div>'
        +'<button class="item-qty-btn" onclick="updateQty(\''+it.id+'\',1)">＋</button>'
        +'</div>';
-    return '<div class="item-card '+stCls+'" onclick="openEdit(\''+it.id+'\')">'
+    return '<div class="item-card '+stCls+'" onclick="cardClick(event,\''+it.id+'\')" onpointerdown="pressStart(event,\''+it.id+'\')" onpointermove="pressMove(event)" onpointerup="pressEnd(event)" onpointercancel="pressEnd(event)" onpointerleave="pressEnd(event)">'
       +'<div class="item-card-bar"></div>'
       +(function(){var b=useSoonBanner(it);return b?'<div class="use-soon">'+b+'</div>':'';})()
       +'<div class="item-emoji">'+renderEmoji(emoji,36)+'</div>'
@@ -976,7 +993,11 @@ function pollDone(){
       if(!items.find(function(m){return m.id===itemId;})&&ID_MAP[itemId])
         itemId=ID_MAP[itemId];
       var it=items.find(function(m){return m.id===itemId;});
-      if(!it){ showToast('⚠️ 收到回傳但找不到品項 id='+itemId); return; }
+      if(!it && cb.item_name){   // id 對不到 → 用品名後援（去空白比對）
+        var _nk=String(cb.item_name).replace(/\s/g,'');
+        it=items.find(function(m){return (m.name||'').replace(/\s/g,'')===_nk;});
+      }
+      if(!it){ showToast('⚠️ 收到回傳但找不到品項'+(cb.item_name?'：'+cb.item_name:' id='+itemId)); return; }
       var _add=(cb.qty_added||1), _before=it.qty;
       it.qty+=_add;
       it.lastBuy=cb.done_date||today();
@@ -1271,6 +1292,43 @@ function deleteItem(){
   items=items.filter(function(m){return m.id!==editId;});
   favs=favs.filter(function(f){return f!==editId;});
   saveData();closeSheet();showToast('🗑 已刪除「'+name+'」');
+  renderAll();initLocTabs();
+}
+// 長按品項 → 確認 → 快速刪除（短按仍開編輯；＋／− 區不觸發；手指移動會取消避免誤刪鄰格）
+var _lpTimer=null,_lpFired=false,_lpId=null,_lpEl=null,_lpX=0,_lpY=0;
+function pressStart(ev,id){
+  if(_lpTimer){clearTimeout(_lpTimer);_lpTimer=null;}   // 清掉上一次殘留計時器
+  if(_lpEl){_lpEl.classList.remove('lp-active');}        // 清掉上一次反白
+  _lpFired=false; _lpId=id; _lpEl=(ev&&ev.currentTarget)||null;
+  _lpX=(ev&&ev.clientX)||0; _lpY=(ev&&ev.clientY)||0;
+  _lpTimer=setTimeout(function(){
+    _lpFired=true;
+    if(_lpEl)_lpEl.classList.add('lp-active');
+    if(navigator.vibrate)try{navigator.vibrate(30);}catch(e){}
+    var it=items.find(function(m){return m.id===_lpId;});
+    var nm=it?it.name:'';
+    var el=_lpEl;
+    setTimeout(function(){
+      var go=confirm('確定刪除「'+nm+'」？');
+      if(el)el.classList.remove('lp-active');
+      if(go) deleteItemById(_lpId);
+      _lpId=null; _lpEl=null;          // 處理完徹底重置，避免下一次抓到這次
+    },220);
+  },600);
+}
+function pressMove(ev){
+  if(!_lpTimer)return;
+  var dx=((ev&&ev.clientX)||0)-_lpX, dy=((ev&&ev.clientY)||0)-_lpY;
+  if(dx*dx+dy*dy>144){ clearTimeout(_lpTimer); _lpTimer=null; if(_lpEl)_lpEl.classList.remove('lp-active'); }
+}
+function pressEnd(ev){ if(_lpTimer){clearTimeout(_lpTimer);_lpTimer=null;} if(_lpEl){_lpEl.classList.remove('lp-active');} }
+function cardClick(ev,id){ var f=_lpFired; _lpFired=false; if(f)return; openEdit(id); }
+function deleteItemById(id){
+  var it=items.find(function(m){return m.id===id;}); if(!it)return;
+  var nm=it.name;
+  items=items.filter(function(m){return m.id!==id;});
+  favs=favs.filter(function(f){return f!==id;});
+  saveData();showToast('🗑 已刪除「'+nm+'」');
   renderAll();initLocTabs();
 }
 
