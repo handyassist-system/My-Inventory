@@ -907,6 +907,7 @@ function pollDone(){
     if(!Array.isArray(queue)||queue.length===0)return;
     localStorage.removeItem('inv_done_callbacks');
     var changed=false;
+    var acks=[];
     queue.forEach(function(cb){
       var itemId=cb.item_id;
       // 嘗試舊 id 對照
@@ -917,8 +918,14 @@ function pollDone(){
       it.qty+=(cb.qty_added||1);
       it.lastBuy=cb.done_date||today();
       changed=true;
+      acks.push({item_name:it.name,qty_added:(cb.qty_added||1)});   // 回報行事曆
       showToast('✅ 庫存更新：'+it.name+' +'+(cb.qty_added||1)+'（行事曆同步）');
     });
+    if(acks.length){   // 回報行事曆 → 行事曆會跳「✅ 回傳成功」
+      var prevAck=[]; try{prevAck=JSON.parse(localStorage.getItem('inv_update_ack')||'[]');}catch(e){}
+      if(!Array.isArray(prevAck))prevAck=[];
+      localStorage.setItem('inv_update_ack',JSON.stringify(prevAck.concat(acks)));
+    }
     if(changed){
       saveData();renderAll();
       if(document.getElementById('pageRestock').classList.contains('active')) renderRestock();
