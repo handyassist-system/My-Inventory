@@ -292,6 +292,11 @@ input:checked+.slider:before{transform:translateX(18px)}
         <div style="font-size:12px;color:var(--ink3);margin-bottom:8px">可自訂各商品的 emoji 圖示。</div>
         <div id="emojiSettingsList"></div>
       </div>
+      <div class="settings-sec">
+        <div class="settings-title">📥 入庫紀錄</div>
+        <div style="font-size:12px;color:var(--ink3);margin-bottom:8px">行事曆採購完成回傳後的入庫歷史（永久保存）。</div>
+        <button class="btn-add-group" onclick="openRestockLog()">📥 查看入庫紀錄</button>
+      </div>
     </div>
   </div>
 
@@ -915,11 +920,13 @@ function pollDone(){
         itemId=ID_MAP[itemId];
       var it=items.find(function(m){return m.id===itemId;});
       if(!it){ showToast('⚠️ 收到回傳但找不到品項 id='+itemId); return; }
-      it.qty+=(cb.qty_added||1);
+      var _add=(cb.qty_added||1), _before=it.qty;
+      it.qty+=_add;
       it.lastBuy=cb.done_date||today();
       changed=true;
-      acks.push({item_name:it.name,qty_added:(cb.qty_added||1)});   // 回報行事曆
-      showToast('✅ 庫存更新：'+it.name+' +'+(cb.qty_added||1)+'（行事曆同步）', 5000);
+      acks.push({item_name:it.name,qty_added:_add});   // 回報行事曆
+      logRestock(it.name,_before,it.qty,_add);          // 寫永久入庫紀錄
+      showToast('✅ 庫存更新：'+it.name+' '+_before+'→'+it.qty+'（+'+_add+'）', 5000);
     });
     if(acks.length){   // 回報行事曆 → 行事曆會跳「✅ 回傳成功」
       var prevAck=[]; try{prevAck=JSON.parse(localStorage.getItem('inv_update_ack')||'[]');}catch(e){}
@@ -933,6 +940,41 @@ function pollDone(){
   }catch(e){}
 }
 setInterval(pollDone,3000);
+// 入庫紀錄（永久保存，不靠 toast 時機）
+function logRestock(name,before,after,added){
+  try{
+    var log=JSON.parse(localStorage.getItem('inv_restock_log')||'[]');
+    if(!Array.isArray(log))log=[];
+    log.unshift({ts:Date.now(),name:name,before:before,after:after,added:added});
+    if(log.length>200)log=log.slice(0,200);
+    localStorage.setItem('inv_restock_log',JSON.stringify(log));
+  }catch(e){}
+}
+function openRestockLog(){
+  var log=[];try{log=JSON.parse(localStorage.getItem('inv_restock_log')||'[]');}catch(e){}
+  if(!Array.isArray(log))log=[];
+  var body;
+  if(!log.length){
+    body='<div style="padding:24px;text-align:center;color:#999">還沒有入庫紀錄。<br>行事曆採購完成回傳後，會自動記在這裡。</div>';
+  }else{
+    body='<div style="max-height:62vh;overflow:auto;-webkit-overflow-scrolling:touch">'+log.map(function(e){
+      var d=new Date(e.ts);
+      var dt=(d.getMonth()+1)+'/'+d.getDate()+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 6px;border-bottom:1px solid #eee">'
+        +'<span><b>'+esc(e.name)+'</b> <span style="color:#999;font-size:12px">'+dt+'</span></span>'
+        +'<span style="color:#16a34a;font-weight:700;white-space:nowrap">'+e.before+'→'+e.after+'（+'+e.added+'）</span></div>';
+    }).join('')+'</div>'
+    +'<button class="btn-add-group" style="margin-top:12px" onclick="clearRestockLog()">🗑 清除入庫紀錄</button>';
+  }
+  document.getElementById('sheetTitle').textContent='📥 入庫紀錄';
+  document.getElementById('sheetBody').innerHTML=body;
+  document.getElementById('editOverlay').classList.add('open');
+}
+function clearRestockLog(){
+  if(!confirm('確定清除所有入庫紀錄？此動作無法復原。'))return;
+  try{localStorage.removeItem('inv_restock_log');}catch(e){}
+  openRestockLog();
+}
 // 只在「分頁回到前景」時處理，確保「✅ 庫存更新」在你正看著的庫存分頁跳出（不在背景被吃掉）
 window.addEventListener('focus', pollDone);
 document.addEventListener('visibilitychange', function(){ if(!document.hidden) pollDone(); });
