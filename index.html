@@ -914,7 +914,7 @@ function pollDone(){
       if(!items.find(function(m){return m.id===itemId;})&&ID_MAP[itemId])
         itemId=ID_MAP[itemId];
       var it=items.find(function(m){return m.id===itemId;});
-      if(!it)return;
+      if(!it){ showToast('⚠️ 收到回傳但找不到品項 id='+itemId); return; }
       it.qty+=(cb.qty_added||1);
       it.lastBuy=cb.done_date||today();
       changed=true;
