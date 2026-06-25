@@ -245,7 +245,7 @@ input:checked+.slider:before{transform:translateX(18px)}
         <span class="chip chip-warn" id="hWarn" style="display:none"></span>
         <span class="chip chip-ok"   id="hTotal"></span>
         <button class="btn-header-add" onclick="openAdd()">＋ 新增</button>
-        <button onclick="window.open('https://mp65p.github.io/My-Schedule/','_blank')" style="border:none;background:none;font-size:18px;cursor:pointer;color:var(--ink3)" title="前往行事曆">📅</button>
+        <button onclick="location.href='https://mp65p.github.io/My-Schedule/'" style="border:none;background:none;font-size:18px;cursor:pointer;color:var(--ink3)" title="前往行事曆">📅</button>
         <button onclick="doLogout()" style="border:none;background:none;font-size:18px;cursor:pointer;color:var(--ink3)">⏏</button>
       </div>
     </div>
@@ -305,7 +305,7 @@ input:checked+.slider:before{transform:translateX(18px)}
         <div style="font-size:12px;color:var(--ink3);margin-bottom:8px">可自訂各商品的 emoji 圖示。</div>
         <div id="emojiSettingsList"></div>
       </div>
-      <div style="text-align:center;color:var(--ink3);font-size:12px;padding:10px 0 4px">庫存管理　版本 v58</div>
+      <div style="text-align:center;color:var(--ink3);font-size:12px;padding:10px 0 4px">庫存管理　版本 v60</div>
     </div>
   </div>
 
@@ -574,6 +574,7 @@ function loadData(){
   // 若新 id 已存在，刪除舊 id 的重複項
   Object.keys(OLD_ID_MAP).forEach(function(oldId){
     var newId=OLD_ID_MAP[oldId];
+    if(oldId===newId) return;   // 對到自己的(egg/milk/water…)不可當重複處理，否則會誤刪整筆
     var hasOld=items.find(function(i){return i.id===oldId;});
     var hasNew=items.find(function(i){return i.id===newId;});
     if(hasOld && hasNew){
@@ -969,7 +970,7 @@ function addToCalendar(id){
     source:'inventory_app'
   }));
   showToast('📅 開啟行事曆：'+it.name+' ×'+qty+(it.unit||''));
-  setTimeout(function(){window.open(CAL_URL,'_blank');},600);
+  setTimeout(function(){location.href=CAL_URL;},600);
 }
 
 function pollDone(){
