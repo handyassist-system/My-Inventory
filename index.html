@@ -318,7 +318,7 @@ input:checked+.slider:before{transform:translateX(18px)}
         <div id="catSettingsList"></div>
         <button class="btn-add-group" onclick="addCategoryGroup()">＋ 新增分類</button>
       </div>
-      <div style="text-align:center;color:var(--ink3);font-size:12px;padding:10px 0 4px">庫存管理　版本 v67</div>
+      <div style="text-align:center;color:var(--ink3);font-size:12px;padding:10px 0 4px">庫存管理　版本 v68</div>
     </div>
   </div>
 
@@ -1238,8 +1238,9 @@ function clearZonePill(){
 }
 function normalFields(it){
   it=it||{};
-  return '<label class="trackqty-row"><input type="checkbox" id="fTrackQty" '+(it.trackQty===false?'':'checked')+' onchange="_toggleQtyFields()"> 記錄數量<span class="field-hint" style="margin:0">（不勾＝只看「需要補」，適合雞蛋/醬油/水果）</span></label>'
-    +'<div id="qtyFields"'+(it.trackQty===false?' style="display:none"':'')+'>'
+  var _trk = ((it.id && it.trackQty!==false) || it.trackQty===true);   // 新增預設不勾；舊品項維持原狀
+  return '<label class="trackqty-row"><input type="checkbox" id="fTrackQty"'+(_trk?' checked':'')+' onchange="_toggleQtyFields()"> 記錄數量</label>'
+    +'<div id="qtyFields"'+(_trk?'':' style="display:none"')+'>'
     +'<div class="field-row">'
     +'<div class="field"><label>單位</label><select id="fUnit">'+unitOpts(it.unit||'個')+'</select></div>'
     +'<div class="field"><label>目前數量</label><input id="fQty" type="number" min="0" value="'+(it.qty!==undefined?it.qty:3)+'"></div>'
