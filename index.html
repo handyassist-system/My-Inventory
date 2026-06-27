@@ -319,7 +319,7 @@ input:checked+.slider:before{transform:translateX(18px)}
         <div id="catSettingsList"></div>
         <button class="btn-add-group" onclick="addCategoryGroup()">＋ 新增分類</button>
       </div>
-      <div style="text-align:center;color:var(--ink3);font-size:12px;padding:10px 0 4px">庫存管理　版本 v73</div>
+      <div style="text-align:center;color:var(--ink3);font-size:12px;padding:10px 0 4px">庫存管理　版本 v74</div>
     </div>
   </div>
 
@@ -911,8 +911,9 @@ function renderSettings(){renderLocSettings();renderCatSettings();}
 
 function renderLocSettings(){
   var el=document.getElementById('locSettingsList');
+  var cap=_captureOpenSG('locSettingsList');
   el.innerHTML=locations.map(function(loc,li){
-    return '<div class="sg"><div class="sg-head" onclick="toggleSG(this)">'
+    return '<div class="sg" data-sgid="loc:'+esc(loc.id)+'"><div class="sg-head" onclick="toggleSG(this)">'
       +'<span class="sg-name">📍 '+esc(loc.name)+'</span>'
       +'<div style="display:flex;align-items:center;gap:6px" onclick="event.stopPropagation()">'
       +'<button class="btn-del-sm" onclick="moveLocation('+li+',-1)"'+(li<=0?' disabled':'')+' title="上移">▲</button>'
@@ -931,12 +932,32 @@ function renderLocSettings(){
       +'<div class="add-inline"><input placeholder="新增子位置" id="nz_'+li+'" onkeydown="if(event.key===\'Enter\')addZone('+li+')"><button class="btn-add-sm" onclick="addZone('+li+')">新增</button></div>'
       +'</div></div>';
   }).join('');
+  _restoreOpenSG('locSettingsList', cap);
 }
 
+function _captureOpenSG(containerId){
+  var c=document.getElementById(containerId); if(!c) return {ids:[],scroll:0};
+  var ids=[]; var sgs=c.querySelectorAll('.sg');
+  for(var i=0;i<sgs.length;i++){ var b=sgs[i].querySelector('.sg-body'); if(b&&b.classList.contains('open')) ids.push(sgs[i].getAttribute('data-sgid')); }
+  var sc=c.closest? c.closest('.page-scroll, .sheet-body, .page'):null;
+  return {ids:ids, scroll: sc?sc.scrollTop:(window.pageYOffset||0), scEl:sc};
+}
+function _restoreOpenSG(containerId, cap){
+  var c=document.getElementById(containerId); if(!c) return;
+  var sgs=c.querySelectorAll('.sg');
+  for(var i=0;i<sgs.length;i++){
+    if(cap.ids.indexOf(sgs[i].getAttribute('data-sgid'))>=0){
+      var b=sgs[i].querySelector('.sg-body'); if(b) b.classList.add('open');
+      var a=sgs[i].querySelector('.sg-arrow'); if(a) a.classList.add('open');
+    }
+  }
+  if(cap.scEl){ cap.scEl.scrollTop=cap.scroll; } else if(cap.scroll){ window.scrollTo(0,cap.scroll); }
+}
 function renderCatSettings(){
   var el=document.getElementById('catSettingsList');
+  var cap=_captureOpenSG('catSettingsList');
   el.innerHTML=categories.map(function(cat,ci){
-    return '<div class="sg"><div class="sg-head" onclick="toggleSG(this)">'
+    return '<div class="sg" data-sgid="cat:'+esc(cat.id)+'"><div class="sg-head" onclick="toggleSG(this)">'
       +'<span class="sg-name">'+esc(cat.icon)+' '+esc(cat.name)+'</span>'
       +'<div style="display:flex;align-items:center;gap:6px" onclick="event.stopPropagation()">'
       +'<button class="btn-del-sm" onclick="moveCategory('+ci+',-1)"'+(ci<=0?' disabled':'')+' title="上移">▲</button>'
@@ -952,10 +973,8 @@ function renderCatSettings(){
       +'<div class="add-inline"><input placeholder="新增商品" id="nci_'+ci+'" onkeydown="if(event.key===\'Enter\')addCatItem('+ci+')"><button class="btn-add-sm" onclick="addCatItem('+ci+')">新增</button></div>'
       +'</div></div>';
   }).join('');
+  _restoreOpenSG('catSettingsList', cap);
 }
-
-
-
 function toggleSG(head){
   var body=head.nextElementSibling;
   var arrow=head.querySelector('.sg-arrow');
