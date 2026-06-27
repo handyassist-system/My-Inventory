@@ -319,7 +319,7 @@ input:checked+.slider:before{transform:translateX(18px)}
         <div id="catSettingsList"></div>
         <button class="btn-add-group" onclick="addCategoryGroup()">＋ 新增分類</button>
       </div>
-      <div style="text-align:center;color:var(--ink3);font-size:12px;padding:10px 0 4px">庫存管理　版本 v76</div>
+      <div style="text-align:center;color:var(--ink3);font-size:12px;padding:10px 0 4px">庫存管理　版本 v77</div>
     </div>
   </div>
 
@@ -350,12 +350,58 @@ input:checked+.slider:before{transform:translateX(18px)}
 
 <div class="toast" id="toast"><span id="toastMsg"></span></div>
 
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
 // ══════════════════════════════════
 //  常數
 // ══════════════════════════════════
 var AUTH_CODE='0430',AUTH_KEY='inv_auth',DATA_KEY='inv_v7';
 var LOC_KEY='inv_locs',CAT_KEY='inv_cats',FAV_KEY='inv_favs';
+// ── Firebase 雲端同步（共用行事曆專案 my-project-c89db；密碼0430空間）──
+var FB_READY=false, db=null, _lastBlob=null, _cloudStarted=false;
+var FB_PATH="inventory/space_0430/blob";
+var firebaseConfig={
+  apiKey:"AIzaSyBGfQ1oKOrt723tJ3w7LIwDLSh0nGwRF30",
+  authDomain:"my-project-c89db.firebaseapp.com",
+  databaseURL:"https://my-project-c89db-default-rtdb.firebaseio.com",
+  projectId:"my-project-c89db",
+  storageBucket:"my-project-c89db.firebasestorage.app",
+  messagingSenderId:"301172719437",
+  appId:"1:301172719437:web:83c981eea84caf77c38104"
+};
+try{ if(typeof firebase!=='undefined'){ firebase.initializeApp(firebaseConfig); db=firebase.database(); FB_READY=true; } }catch(e){ FB_READY=false; }
+function _curBlob(){ return JSON.stringify({items:items,categories:categories,locations:locations,favs:favs}); }
+function pushCloud(){
+  if(!FB_READY||!db) return;
+  try{ var b=_curBlob(); _lastBlob=b; db.ref(FB_PATH).set(b); }catch(e){}
+}
+function startCloudSync(){
+  if(!FB_READY||!db||_cloudStarted) return;
+  _cloudStarted=true;
+  db.ref(FB_PATH).on("value", function(s){
+    var blob; try{ blob=s.val(); }catch(e){ return; }
+    if(blob===_lastBlob) return;        // 自己寫的回音，略過
+    if(blob==null){                      // 雲端空 → 若本機有資料，上傳當初始
+      if(items.length||categories.length||locations.length) pushCloud();
+      return;
+    }
+    try{
+      var d=JSON.parse(blob);
+      items=Array.isArray(d.items)?d.items:[];
+      categories=Array.isArray(d.categories)?d.categories:[];
+      locations=Array.isArray(d.locations)?d.locations:[];
+      favs=Array.isArray(d.favs)?d.favs:[];
+      _lastBlob=blob;
+      // 同步到本機後援 + 重畫
+      try{localStorage.setItem(DATA_KEY,JSON.stringify(items));localStorage.setItem(CAT_KEY,JSON.stringify(categories));localStorage.setItem(LOC_KEY,JSON.stringify(locations));localStorage.setItem(FAV_KEY,JSON.stringify(favs));}catch(e){}
+      if(typeof initLocTabs==='function') initLocTabs();
+      if(typeof renderAll==='function') renderAll();
+      var sp=document.getElementById('pageSettings');
+      if(sp&&sp.classList.contains('active')){ if(typeof renderCatSettings==='function')renderCatSettings(); if(typeof renderLocSettings==='function')renderLocSettings(); }
+    }catch(e){}
+  });
+}
 var CUSTOM_EMOJI_KEY='inv_custom_emoji';
 var CAL_URL='https://mp65p.github.io/My-Schedule/';
 var SOON_DAYS=7,WARRANTY_WARN=30,CAT_3C='elec',BUY_ADVANCE=2;
@@ -590,7 +636,7 @@ function doLogin(){
     localStorage.setItem(AUTH_KEY,'1');
     document.getElementById('loginPage').style.display='none';
     document.getElementById('appWrap').style.display='block';
-    loadData();initLocTabs();renderAll();
+    loadData();initLocTabs();renderAll();startCloudSync();
   } else {
     document.getElementById('authErr').textContent='授權碼錯誤';
     document.getElementById('authInput').value='';
@@ -686,6 +732,7 @@ function saveData(){
   try{localStorage.setItem(LOC_KEY, JSON.stringify(locations));}catch(e){}
   try{localStorage.setItem(CAT_KEY, JSON.stringify(categories));}catch(e){}
   try{localStorage.setItem(FAV_KEY, JSON.stringify(favs));}catch(e){}
+  pushCloud();   // 同步到雲端
 }
 function isFav(id){return favs.indexOf(id)>=0;}
 
@@ -1560,7 +1607,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeSheet()
 if(localStorage.getItem(AUTH_KEY)==='1'){
   document.getElementById('loginPage').style.display='none';
   document.getElementById('appWrap').style.display='block';
-  loadData();initLocTabs();renderAll();
+  loadData();initLocTabs();renderAll();startCloudSync();
 }
 </script>
 </body>
