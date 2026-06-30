@@ -319,7 +319,7 @@ input:checked+.slider:before{transform:translateX(18px)}
         <div id="catSettingsList"></div>
         <button class="btn-add-group" onclick="addCategoryGroup()">＋ 新增分類</button>
       </div>
-      <div style="text-align:center;color:var(--ink3);font-size:12px;padding:10px 0 4px">庫存管理　版本 v84</div>
+      <div style="text-align:center;color:var(--ink3);font-size:12px;padding:10px 0 4px">庫存管理　版本 v85</div>
     </div>
   </div>
 
@@ -371,7 +371,7 @@ var firebaseConfig={
   appId:"1:301172719437:web:83c981eea84caf77c38104"
 };
 try{ if(typeof firebase!=='undefined'){ firebase.initializeApp(firebaseConfig); db=firebase.database(); FB_READY=true; } }catch(e){ FB_READY=false; }
-function _curBlob(){ return JSON.stringify({items:items,categories:categories,locations:locations,favs:favs}); }
+function _curBlob(){ return JSON.stringify({items:items,categories:categories,locations:locations,favs:favs,customEmoji:customEmoji}); }
 function pushCloud(){
   if(!FB_READY||!db) return;
   try{ var b=_curBlob(); _lastBlob=b; db.ref(FB_PATH).set(b); }catch(e){}
@@ -395,6 +395,7 @@ function startCloudSync(){
     categories=Array.isArray(remote.categories)?remote.categories:[];
     locations=Array.isArray(remote.locations)?remote.locations:[];
     favs=Array.isArray(remote.favs)?remote.favs:[];
+    if(remote.customEmoji && typeof remote.customEmoji==='object'){ customEmoji=remote.customEmoji; saveCustomEmoji(); }
     _lastBlob=blob;
     try{localStorage.setItem(DATA_KEY,JSON.stringify(items));localStorage.setItem(CAT_KEY,JSON.stringify(categories));localStorage.setItem(LOC_KEY,JSON.stringify(locations));localStorage.setItem(FAV_KEY,JSON.stringify(favs));}catch(e){}
     if(typeof initLocTabs==='function') initLocTabs();
@@ -1148,8 +1149,8 @@ function _applyEmojiInPlace(){
   var btn=document.querySelector('.emoji-edit[onclick="openEmojiPickerByIdx('+ci+','+ii+')"]');
   if(btn) btn.innerHTML=renderEmoji(getEmoji(_emojiPickFor.name, categories[ci].id),16);
 }
-function pickEmoji(e){ if(!_emojiPickFor)return; customEmoji[_emojiPickFor.name]=e; saveCustomEmoji(); _applyEmojiInPlace(); renderAll(); closeEmojiPicker(); }
-function resetEmojiPick(){ if(!_emojiPickFor)return; delete customEmoji[_emojiPickFor.name]; saveCustomEmoji(); _applyEmojiInPlace(); renderAll(); closeEmojiPicker(); }
+function pickEmoji(e){ if(!_emojiPickFor)return; customEmoji[_emojiPickFor.name]=e; saveCustomEmoji(); pushCloud(); _applyEmojiInPlace(); renderAll(); closeEmojiPicker(); }
+function resetEmojiPick(){ if(!_emojiPickFor)return; delete customEmoji[_emojiPickFor.name]; saveCustomEmoji(); pushCloud(); _applyEmojiInPlace(); renderAll(); closeEmojiPicker(); }
 function closeEmojiPicker(ev){ var h=document.getElementById('emojiPickerHost'); if(h)h.innerHTML=''; _emojiPickFor=null; }
 
 // ══════════════════════════════════
