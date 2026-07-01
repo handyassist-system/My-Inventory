@@ -150,6 +150,9 @@ header{background:var(--surface);border-bottom:1px solid var(--border);position:
 .emoji-pick-hd{display:flex;align-items:center;font-size:15px;margin-bottom:8px}
 .emoji-pick-x{margin-left:auto;border:none;background:none;font-size:18px;cursor:pointer;color:var(--ink3)}
 .emoji-pick-cur{font-size:13px;color:var(--ink3);display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.emoji-pick-custom{display:flex;gap:6px;margin-bottom:12px}
+.emoji-pick-custom input{flex:1;min-width:0;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:16px}
+.emoji-pick-use{padding:8px 14px;border:none;border-radius:8px;background:var(--accent,#2f9e6e);color:#fff;font-size:14px;font-weight:600;white-space:nowrap}
 .emoji-pick-auto{margin-left:auto;border:1px solid var(--border);background:#fff;border-radius:999px;padding:3px 10px;font-size:12px;cursor:pointer}
 .emoji-pick-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
 .emoji-pick-btn{border:1px solid var(--border);background:#fff;border-radius:10px;font-size:22px;line-height:1;padding:7px 0;cursor:pointer}
@@ -319,7 +322,7 @@ input:checked+.slider:before{transform:translateX(18px)}
         <div id="catSettingsList"></div>
         <button class="btn-add-group" onclick="addCategoryGroup()">＋ 新增分類</button>
       </div>
-      <div style="text-align:center;color:var(--ink3);font-size:12px;padding:10px 0 4px">庫存管理　版本 v86</div>
+      <div style="text-align:center;color:var(--ink3);font-size:12px;padding:10px 0 4px">庫存管理　版本 v88</div>
     </div>
   </div>
 
@@ -467,6 +470,7 @@ function _guessEmoji(name){
     [/(饅頭|包子)/,'🫓'],[/(火鍋|湯)/,'🍲'],[/沙拉/,'🥗'],[/(麥片|燕麥|穀片)/,'🥣'],
     [/(優酪|優格|養樂多)/,'🥛'],[/(起司|乳酪|起士)/,'🧀'],[/冰塊/,'🧊'],
     [/(牛奶|羊奶|鮮奶|奶精|奶)/,'🥛'],
+    [/(肉粽|粽子|粽)/,'🫔'],
     [/(地瓜|番薯|薯|芋)/,'🍠'],[/(米|飯)/,'🍚'],[/(麵|面)/,'🍜'],[/粉/,'🍚'],
     [/雞/,'🍗'],[/(豬|牛|羊|肉|排|培根)/,'🥩'],[/(魚|鮭|鱈|鮪)/,'🐟'],[/蝦/,'🦐'],[/(蟹|蠔|蛤|貝)/,'🦀'],
     [/蛋/,'🥚'],[/(菜|蔬|芥|蔥|椒)/,'🥬'],[/(花椰|青花|綠花)/,'🥦'],[/蘿蔔/,'🥕'],[/菇/,'🍄'],[/玉米/,'🌽'],[/豆/,'🫘'],
@@ -1143,6 +1147,7 @@ function openEmojiPicker(name,catId){
     +'<div class="emoji-pick-card" onclick="event.stopPropagation()">'
     +'<div class="emoji-pick-hd"><b>'+esc(name)+'</b> — 選擇圖示<button type="button" class="emoji-pick-x" onclick="closeEmojiPicker()">✕</button></div>'
     +'<div class="emoji-pick-cur">目前：<span style="font-size:26px">'+cur+'</span> <button type="button" class="emoji-pick-auto" onclick="resetEmojiPick()">↺ 自動</button></div>'
+    +'<div class="emoji-pick-custom"><input id="emojiCustomInput" maxlength="8" placeholder="或自己輸入圖示（用鍵盤😀選一個貼上）" onkeydown="if(event.key===\'Enter\')applyCustomEmoji()"><button type="button" class="emoji-pick-use" onclick="applyCustomEmoji()">使用</button></div>'
     +'<div class="emoji-pick-grid">'+grid(pal)+'</div>'
     +'<details class="emoji-pick-more"><summary>看更多分類圖示</summary><div class="emoji-pick-grid">'+more+'</div></details>'
     +'</div></div>';
@@ -1157,6 +1162,14 @@ function _applyEmojiInPlace(){
   if(ci<0) return;
   var btn=document.querySelector('.emoji-edit[onclick="openEmojiPickerByIdx('+ci+','+ii+')"]');
   if(btn) btn.innerHTML=renderEmoji(getEmoji(_emojiPickFor.name, categories[ci].id),16);
+}
+function applyCustomEmoji(){
+  var el=document.getElementById('emojiCustomInput'); if(!el) return;
+  var v=(el.value||'').trim();
+  if(!v){ showToast('請先輸入一個圖示'); return; }
+  var arr=Array.from(v);                    // 取第一個字符(emoji)
+  var e=arr[0]; if(arr.length>1 && /[\u200d\uFE0F]/.test(v)) e=v;  // ZWJ/組合emoji整串保留
+  pickEmoji(e);
 }
 function pickEmoji(e){ if(!_emojiPickFor)return; customEmoji[_emojiPickFor.name]=e; saveCustomEmoji(); pushCloud(); _applyEmojiInPlace(); renderAll(); closeEmojiPicker(); }
 function resetEmojiPick(){ if(!_emojiPickFor)return; delete customEmoji[_emojiPickFor.name]; saveCustomEmoji(); pushCloud(); _applyEmojiInPlace(); renderAll(); closeEmojiPicker(); }
