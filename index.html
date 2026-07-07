@@ -322,7 +322,7 @@ input:checked+.slider:before{transform:translateX(18px)}
         <div id="catSettingsList"></div>
         <button class="btn-add-group" onclick="addCategoryGroup()">＋ 新增分類</button>
       </div>
-      <div style="text-align:center;color:var(--ink3);font-size:12px;padding:10px 0 4px">庫存管理　版本 v89</div>
+      <div style="text-align:center;color:var(--ink3);font-size:12px;padding:10px 0 4px">庫存管理　版本 v90</div>
     </div>
   </div>
 
@@ -645,13 +645,17 @@ function dateBadge(it){
 // ══════════════════════════════════
 //  Login
 // ══════════════════════════════════
+function _enterInventory(){
+  document.getElementById('loginPage').style.display='none';
+  document.getElementById('appWrap').style.display='block';
+  loadData();initLocTabs();renderAll();startCloudSync();
+}
 function doLogin(){
   var code=document.getElementById('authInput').value.trim();
   if(code===AUTH_CODE){
     localStorage.setItem(AUTH_KEY,'1');
-    document.getElementById('loginPage').style.display='none';
-    document.getElementById('appWrap').style.display='block';
-    loadData();initLocTabs();renderAll();startCloudSync();
+    try{ localStorage.setItem('cal_auth','0430'); }catch(e){}   // 共用登入(讓行事曆也認得)
+    _enterInventory();
   } else {
     document.getElementById('authErr').textContent='授權碼錯誤';
     document.getElementById('authInput').value='';
@@ -660,6 +664,7 @@ function doLogin(){
 }
 function doLogout(){
   localStorage.removeItem(AUTH_KEY);
+  try{ localStorage.removeItem('cal_auth'); }catch(e){}          // 一起登出(兩個App共用登入)
   document.getElementById('loginPage').style.display='flex';
   document.getElementById('appWrap').style.display='none';
   document.getElementById('authInput').value='';
@@ -1635,7 +1640,8 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeSheet()
 // ══════════════════════════════════
 //  Init
 // ══════════════════════════════════
-if(localStorage.getItem(AUTH_KEY)==='1'){
+var _sharedLogin=null; try{ _sharedLogin=localStorage.getItem('cal_auth'); }catch(e){}
+if(localStorage.getItem(AUTH_KEY)==='1' || _sharedLogin){
   document.getElementById('loginPage').style.display='none';
   document.getElementById('appWrap').style.display='block';
   loadData();initLocTabs();renderAll();startCloudSync();
