@@ -262,7 +262,7 @@ input:checked+.slider:before{transform:translateX(18px)}
 <div id="appWrap" style="display:none">
   <header>
     <div class="header-inner">
-      <div class="logo">🏠 庫存管理</div>
+      <div class="logo">🏠 庫存管理 <span style="font-size:11px;color:var(--ink3);font-weight:normal">v94</span></div>
       <div class="header-right">
         <span class="chip chip-warn" id="hWarn" style="display:none"></span>
         <span class="chip chip-ok"   id="hTotal"></span>
@@ -322,7 +322,14 @@ input:checked+.slider:before{transform:translateX(18px)}
         <div id="catSettingsList"></div>
         <button class="btn-add-group" onclick="addCategoryGroup()">＋ 新增分類</button>
       </div>
-      <div style="text-align:center;color:var(--ink3);font-size:12px;padding:10px 0 4px">庫存管理　版本 v90</div>
+      <div class="settings-sec">
+        <div class="settings-title">💾 資料備份</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-add-group" onclick="exportInvBackup()" style="flex:1">⬇️ 匯出備份</button>
+          <label class="btn-add-group" style="flex:1;text-align:center;cursor:pointer;margin:0">⬆️ 匯入還原<input type="file" accept="application/json,.json" onchange="if(this.files[0])importInvBackup(this.files[0]);this.value=''" style="display:none"></label>
+        </div>
+        <div style="font-size:12px;color:var(--ink3);margin-top:6px">備份含：商品、分類、區域、常用</div>
+      </div>
     </div>
   </div>
 
@@ -364,6 +371,25 @@ var LOC_KEY='inv_locs',CAT_KEY='inv_cats',FAV_KEY='inv_favs';
 // ── Firebase 雲端同步（共用行事曆專案 my-project-c89db；密碼0430空間）──
 var FB_READY=false, db=null, _lastBlob=null, _cloudStarted=false;
 var FB_PATH="inventory/space_0430/blob";
+var ADMIN_EMAIL_INV="mp65p@hotmail.com";
+function emailKey(e){ return String(e||"").toLowerCase().replace(/[.#$\[\]]/g,"_"); }
+function _resolveFbPath(){
+  var cal=null; try{ cal=localStorage.getItem('cal_auth'); }catch(e){}
+  if(cal && cal.indexOf('@')>=0){ return "inventory/"+emailKey(cal)+"/blob"; }  // email 客戶 → 各自空間
+  return "inventory/space_0430/blob";                                            // 0430 後門/舊 → 沿用
+}
+function migrateInvIfNeeded(cb){
+  var cal=null; try{ cal=localStorage.getItem('cal_auth'); }catch(e){}
+  // 只有管理員 mp65p 才把舊 space_0430 搬到自己的 email 空間
+  if(!cal || cal.toLowerCase()!==ADMIN_EMAIL_INV || FB_PATH==="inventory/space_0430/blob" || !db){ cb&&cb(); return; }
+  db.ref(FB_PATH).once("value").then(function(snap){
+    if(snap.exists()){ cb&&cb(); return; }                    // 新空間已有資料 → 不搬
+    db.ref("inventory/space_0430/blob").once("value").then(function(old){
+      if(old.exists()){ db.ref(FB_PATH).set(old.val()).then(function(){ cb&&cb(); }).catch(function(){ cb&&cb(); }); }
+      else { cb&&cb(); }
+    }).catch(function(){ cb&&cb(); });
+  }).catch(function(){ cb&&cb(); });
+}
 var firebaseConfig={
   apiKey:"AIzaSyBGfQ1oKOrt723tJ3w7LIwDLSh0nGwRF30",
   authDomain:"my-project-c89db.firebaseapp.com",
@@ -648,13 +674,15 @@ function dateBadge(it){
 function _enterInventory(){
   document.getElementById('loginPage').style.display='none';
   document.getElementById('appWrap').style.display='block';
-  loadData();initLocTabs();renderAll();startCloudSync();
+  FB_PATH=_resolveFbPath();
+  migrateInvIfNeeded(function(){
+    loadData();initLocTabs();renderAll();startCloudSync();
+  });
 }
 function doLogin(){
   var code=document.getElementById('authInput').value.trim();
   if(code===AUTH_CODE){
     localStorage.setItem(AUTH_KEY,'1');
-    try{ localStorage.setItem('cal_auth','0430'); }catch(e){}   // 共用登入(讓行事曆也認得)
     _enterInventory();
   } else {
     document.getElementById('authErr').textContent='授權碼錯誤';
@@ -756,6 +784,39 @@ function _saveLocal(){
 function saveData(){
   _saveLocal();
   pushCloud();   // 同步到雲端
+}
+// ── 資料備份 ──
+function exportInvBackup(){
+  var data={ type:"inventory-backup", version:1, exportedAt:new Date().toISOString(),
+    items:items, categories:categories, locations:locations, favs:favs, customEmoji:customEmoji };
+  try{
+    var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+    var a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="庫存備份_"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },100);
+  }catch(e){ alert("匯出失敗："+e.message); }
+}
+function importInvBackup(file){
+  if(!file) return;
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      var d=JSON.parse(ev.target.result);
+      if(d.type!=="inventory-backup"){ alert("這不是庫存備份檔"); return; }
+      if(!confirm("匯入將覆蓋目前所有庫存資料，確定嗎？")) return;
+      items=Array.isArray(d.items)?d.items:[];
+      categories=Array.isArray(d.categories)?d.categories:[];
+      locations=Array.isArray(d.locations)?d.locations:[];
+      favs=Array.isArray(d.favs)?d.favs:[];
+      if(d.customEmoji && typeof d.customEmoji==="object"){ customEmoji=d.customEmoji; saveCustomEmoji(); }
+      saveData();      // 存本機 + 雲端
+      renderAll();
+      alert("✅ 已還原庫存資料\n商品 "+items.length+" 筆");
+    }catch(e){ alert("匯入失敗，檔案可能損毀"); }
+  };
+  reader.readAsText(file);
 }
 function isFav(id){return favs.indexOf(id)>=0;}
 
@@ -1644,7 +1705,10 @@ var _sharedLogin=null; try{ _sharedLogin=localStorage.getItem('cal_auth'); }catc
 if(localStorage.getItem(AUTH_KEY)==='1' || _sharedLogin){
   document.getElementById('loginPage').style.display='none';
   document.getElementById('appWrap').style.display='block';
-  loadData();initLocTabs();renderAll();startCloudSync();
+  FB_PATH=_resolveFbPath();                                  // 依登入 email 決定各自空間
+  migrateInvIfNeeded(function(){                             // 管理員舊資料搬移(僅一次)
+    loadData();initLocTabs();renderAll();startCloudSync();
+  });
 }
 </script>
 </body>
