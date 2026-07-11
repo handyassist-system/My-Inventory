@@ -25,7 +25,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--ink)
 /* Header */
 header{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
 .header-inner{max-width:600px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:50px;padding:0 14px}
-.logo{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:16px;color:var(--accent)}
+.logo{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;color:var(--accent)}
 .header-right{display:flex;gap:5px;align-items:center}
 .chip{font-size:11px;font-weight:600;border-radius:20px;padding:2px 8px;white-space:nowrap}
 .chip-warn{background:var(--warn-light);color:var(--warn)}
@@ -262,7 +262,7 @@ input:checked+.slider:before{transform:translateX(18px)}
 <div id="appWrap" style="display:none">
   <header>
     <div class="header-inner">
-      <div class="logo">🏠 庫存管理 <span style="font-size:11px;color:var(--ink3);font-weight:normal">v94</span></div>
+      <div class="logo" style="white-space:nowrap">🏠 庫存管理 <span style="font-size:10px;color:var(--ink3);font-weight:normal;white-space:nowrap">v1.0版(2026)</span></div>
       <div class="header-right">
         <span class="chip chip-warn" id="hWarn" style="display:none"></span>
         <span class="chip chip-ok"   id="hTotal"></span>
@@ -378,6 +378,19 @@ function _resolveFbPath(){
   if(cal && cal.indexOf('@')>=0){ return "inventory/"+emailKey(cal)+"/blob"; }  // email 客戶 → 各自空間
   return "inventory/space_0430/blob";                                            // 0430 後門/舊 → 沿用
 }
+function _ensureInvOwner(){                       // 換帳號 → 清本機快取(避免看到上一個帳號資料)
+  var prev=null; try{ prev=localStorage.getItem('inv_owner'); }catch(e){}
+  if(prev!==FB_PATH){
+    items=[];categories=[];locations=[];favs=[];customEmoji={};
+    try{
+      localStorage.removeItem(DATA_KEY);localStorage.removeItem(CAT_KEY);
+      localStorage.removeItem(LOC_KEY);localStorage.removeItem(FAV_KEY);
+      localStorage.removeItem(CUSTOM_EMOJI_KEY);
+      localStorage.setItem('inv_owner',FB_PATH);
+    }catch(e){}
+    _lastBlob=null; _cloudStarted=false;
+  }
+}
 function migrateInvIfNeeded(cb){
   var cal=null; try{ cal=localStorage.getItem('cal_auth'); }catch(e){}
   // 只有管理員 mp65p 才把舊 space_0430 搬到自己的 email 空間
@@ -389,6 +402,42 @@ function migrateInvIfNeeded(cb){
       else { cb&&cb(); }
     }).catch(function(){ cb&&cb(); });
   }).catch(function(){ cb&&cb(); });
+}
+// ── 方案驗證：完整版/試用/管理員才可用庫存 ──
+function _invServerNow(cb){
+  try{ db.ref(".info/serverTimeOffset").once("value").then(function(s){ cb(Date.now()+(s.val()||0)); }).catch(function(){ cb(Date.now()); }); }
+  catch(e){ cb(Date.now()); }
+}
+function verifyInvAccess(allow, deny){
+  var cal=null; try{ cal=localStorage.getItem('cal_auth'); }catch(e){}
+  if((cal && cal.toLowerCase()===ADMIN_EMAIL_INV) || localStorage.getItem(AUTH_KEY)==='1'){ allow(); return; }  // 管理員/0430
+  if(!cal || cal.indexOf('@')<0 || !db){ allow(); return; }   // 異常 → 放行避免誤擋
+  db.ref("subscribers/"+emailKey(cal)).once("value").then(function(snap){
+    var s=snap.val();
+    if(!s){ deny("free"); return; }
+    _invServerNow(function(now){
+      var expMs = s.expiry ? Date.parse(s.expiry+"T23:59:59") : 0;
+      var expired = expMs && now>expMs;
+      var plan = expired ? "free" : (s.plan||"free");
+      if(plan==="full" || plan==="trial"){ allow(); } else { deny(plan); }
+    });
+  }).catch(function(){ allow(); });   // 讀取失敗 → 放行(不誤擋付費客戶)
+}
+function showInvUpgrade(plan){
+  var wrap=document.getElementById('appWrap'); if(wrap) wrap.style.display='none';
+  var lp=document.getElementById('loginPage'); if(lp) lp.style.display='none';
+  var d=document.getElementById('invLock');
+  if(!d){
+    d=document.createElement('div'); d.id='invLock';
+    d.style.cssText='position:fixed;inset:0;background:#fff;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center';
+    d.innerHTML='<div style="font-size:48px">🔒</div>'
+      +'<h2 style="margin:12px 0;color:#333;font-size:19px">庫存管理為完整版功能</h2>'
+      +'<p style="color:#666;font-size:14px;line-height:1.7">升級「智在生活完整版」即可使用<br>📦 家中庫存管理<br>🔄 採購 × 庫存自動連動</p>'
+      +'<a href="https://line.me/R/ti/p/@373pfdee" style="margin-top:22px;background:#06C755;color:#fff;padding:14px 28px;border-radius:12px;text-decoration:none;font-weight:700">💬 加 LINE 升級完整版</a>'
+      +'<a href="https://handyassist-system.github.io/My-Schedule/" style="margin-top:16px;color:#888;font-size:13px;text-decoration:none">← 返回行事曆</a>';
+    document.body.appendChild(d);
+  }
+  d.style.display='flex';
 }
 var firebaseConfig={
   apiKey:"AIzaSyBGfQ1oKOrt723tJ3w7LIwDLSh0nGwRF30",
@@ -675,9 +724,10 @@ function _enterInventory(){
   document.getElementById('loginPage').style.display='none';
   document.getElementById('appWrap').style.display='block';
   FB_PATH=_resolveFbPath();
-  migrateInvIfNeeded(function(){
-    loadData();initLocTabs();renderAll();startCloudSync();
-  });
+  _ensureInvOwner();
+  verifyInvAccess(function(){        // 完整版/試用/管理員 → 進入
+    migrateInvIfNeeded(function(){ loadData();initLocTabs();renderAll();startCloudSync(); });
+  }, function(plan){ showInvUpgrade(plan); });   // 其他 → 擋
 }
 function doLogin(){
   var code=document.getElementById('authInput').value.trim();
@@ -1706,9 +1756,10 @@ if(localStorage.getItem(AUTH_KEY)==='1' || _sharedLogin){
   document.getElementById('loginPage').style.display='none';
   document.getElementById('appWrap').style.display='block';
   FB_PATH=_resolveFbPath();                                  // 依登入 email 決定各自空間
-  migrateInvIfNeeded(function(){                             // 管理員舊資料搬移(僅一次)
-    loadData();initLocTabs();renderAll();startCloudSync();
-  });
+  _ensureInvOwner();
+  verifyInvAccess(function(){                                // 完整版/試用/管理員 → 進入
+    migrateInvIfNeeded(function(){ loadData();initLocTabs();renderAll();startCloudSync(); });
+  }, function(plan){ showInvUpgrade(plan); });               // 其他 → 擋
 }
 </script>
 </body>
