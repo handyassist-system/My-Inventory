@@ -247,7 +247,7 @@ input:checked+.slider:before{transform:translateX(18px)}
 <body>
 
 <!-- Login -->
-<div id="loginPage">
+<div id="loginPage" style="display:none">
   <div class="login-card">
     <div class="login-logo">🏠</div>
     <div class="login-title">家庭庫存管理</div>
@@ -1760,6 +1760,8 @@ if(localStorage.getItem(AUTH_KEY)==='1' || _sharedLogin){
   verifyInvAccess(function(){                                // 完整版/試用/管理員 → 進入
     migrateInvIfNeeded(function(){ loadData();initLocTabs();renderAll();startCloudSync(); });
   }, function(plan){ showInvUpgrade(plan); });               // 其他 → 擋
+} else {
+  document.getElementById('loginPage').style.display='flex';  // 沒登入 → 顯示登入頁
 }
 </script>
 </body>
