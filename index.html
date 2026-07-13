@@ -24,8 +24,8 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--ink)
 
 /* Header */
 header{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
-.header-inner{max-width:600px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:50px;padding:0 14px}
-.logo{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;color:var(--accent)}
+.header-inner{max-width:600px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:54px;padding:0 16px}
+.logo{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:16px;color:var(--accent);letter-spacing:.2px}
 .header-right{display:flex;gap:5px;align-items:center}
 .chip{font-size:11px;font-weight:600;border-radius:20px;padding:2px 8px;white-space:nowrap}
 .chip-warn{background:var(--warn-light);color:var(--warn)}
@@ -46,11 +46,10 @@ header{background:var(--surface);border-bottom:1px solid var(--border);position:
 .zone-tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
 
 /* Bottom Tab */
-.bottom-tab{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:100}
-.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:7px 0;border:none;background:transparent;cursor:pointer;font-family:'Noto Sans TC',sans-serif;font-size:10px;color:var(--ink3);transition:color .15s;position:relative}
-.tab-btn.active{color:var(--accent)}
-.tab-btn.active .tab-icon{background:var(--accent-light)}
-.tab-icon{font-size:17px;width:34px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:11px}
+.bottom-tab{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:100;box-shadow:0 -2px 14px rgba(46,46,51,.06);padding:4px 4px calc(4px + env(safe-area-inset-bottom))}
+.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:7px 0;margin:0 4px;border:none;background:transparent;cursor:pointer;font-family:'Noto Sans TC',sans-serif;font-size:11px;font-weight:600;color:var(--ink3);transition:all .18s;position:relative;border-radius:15px}
+.tab-btn.active{color:var(--accent);background:var(--accent-light)}
+.tab-icon{font-size:18px;display:flex;align-items:center;justify-content:center;line-height:1}
 .tab-badge{position:absolute;top:6px;right:calc(50% - 22px);background:var(--warn);color:#fff;font-size:9px;font-weight:700;border-radius:10px;padding:1px 5px;min-width:16px;text-align:center}
 
 /* Pages */
@@ -58,12 +57,16 @@ header{background:var(--surface);border-bottom:1px solid var(--border);position:
 .page.active{display:block}
 
 /* 庫存頁內容區 */
-.inv-content{max-width:600px;margin:0 auto;padding:10px 14px 8px}
+.inv-content{max-width:600px;margin:10px auto 8px;padding:14px 12px 16px;background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
 
 /* 商品 Grid */
 .item-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .cat-group-head{grid-column:1/-1;font-size:13px;font-weight:700;color:var(--ink2);padding:10px 2px 4px;border-bottom:1px solid var(--border);margin-bottom:2px;display:flex;align-items:center;gap:4px}
-.item-card{background:var(--surface);border-radius:var(--radius-lg);border:1.5px solid var(--border);padding:10px 6px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:box-shadow .15s;position:relative;overflow:hidden}
+.cat-filter{display:flex;gap:6px;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;margin:0 -12px 12px;padding:0 12px 3px}
+.cat-filter::-webkit-scrollbar{display:none}
+.cat-chip{display:inline-flex;align-items:center;gap:3px;padding:5px 13px;font-size:12.5px;font-weight:600;color:var(--ink2);border:1.5px solid var(--border);border-radius:20px;background:var(--surface);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .15s;font-family:'Noto Sans TC',sans-serif}
+.cat-chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.item-card{background:var(--surface2);border-radius:var(--radius-lg);border:1.5px solid var(--border);padding:10px 6px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:box-shadow .15s;position:relative;overflow:hidden}
 .item-card:hover{box-shadow:var(--shadow-md)}
 .item-card.pressing{transform:scale(.94);opacity:.7;transition:transform .15s,opacity .15s}
 .item-card.st-expired{border-color:var(--warn);background:var(--warn-light)}
@@ -241,7 +244,9 @@ input:checked+.slider:before{transform:translateX(18px)}
 .btn-danger{background:transparent;color:var(--warn);border:1.5px solid var(--warn-mid);border-radius:8px;padding:9px 14px;font-size:13px;cursor:pointer;font-family:'Noto Sans TC',sans-serif}
 .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;border-radius:10px;padding:10px 18px;font-size:13px;font-weight:500;z-index:300;opacity:0;transition:all .3s;white-space:nowrap;pointer-events:none;max-width:90vw;overflow:hidden}
 .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
-.empty-hint{text-align:center;padding:40px 16px;color:var(--ink3);font-size:13px}
+.empty-hint{text-align:center;padding:52px 20px;color:var(--ink2);font-size:14px;font-weight:600}
+.empty-hint .eico{font-size:46px;display:block;margin-bottom:12px;opacity:.85}
+.empty-hint .esub{display:block;font-size:12px;color:var(--ink3);font-weight:400;margin-top:6px}
 </style>
 </head>
 <body>
@@ -260,13 +265,11 @@ input:checked+.slider:before{transform:translateX(18px)}
 <div id="appWrap" style="display:none">
   <header>
     <div class="header-inner">
-      <div class="logo" style="white-space:nowrap">🏠 庫存管理 <span style="font-size:10px;color:var(--ink3);font-weight:normal;white-space:nowrap">v1.0版(2026)</span></div>
+      <div class="logo" style="white-space:nowrap">🏠 庫存管理 <span style="font-size:10px;color:var(--ink3);font-weight:normal;white-space:nowrap">v1.1</span></div>
       <div class="header-right">
         <span class="chip chip-warn" id="hWarn" style="display:none"></span>
-        <span class="chip chip-ok"   id="hTotal"></span>
-        <button class="btn-header-add" onclick="openAdd()">＋ 新增</button>
-        <button onclick="location.href='https://handyassist-system.github.io/My-Schedule/'" style="border:none;background:none;font-size:18px;cursor:pointer;color:var(--ink3)" title="前往行事曆">📅</button>
-        <button onclick="doLogout()" style="border:none;background:none;font-size:18px;cursor:pointer;color:var(--ink3)">⏏</button>
+        <span class="chip chip-ok" id="hTotal"></span>
+        <button onclick="goCalendar()" title="前往行事曆" style="border:none;background:none;font-size:21px;cursor:pointer;padding:5px;color:var(--ink2)">📱</button>
       </div>
     </div>
   </header>
@@ -281,9 +284,11 @@ input:checked+.slider:before{transform:translateX(18px)}
   <!-- 庫存頁 -->
   <div class="page active" id="pageInv">
     <div class="inv-content">
-      <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
-        <button onclick="openRestockLog()" style="background:#fff;border:1.5px solid var(--border,#e5e3df);border-radius:9px;padding:6px 13px;font-size:13px;font-weight:600;color:var(--ink2,#555);cursor:pointer;font-family:'Noto Sans TC',sans-serif">📥 入庫紀錄</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <button onclick="openRestockLog()" style="background:#fff;border:1.5px solid var(--border,#e5e3df);border-radius:9px;padding:7px 14px;font-size:13px;font-weight:600;color:var(--ink2,#555);cursor:pointer;font-family:'Noto Sans TC',sans-serif">📥 入庫紀錄</button>
+        <button onclick="openAdd()" style="background:var(--accent);color:#fff;border:none;border-radius:9px;padding:7px 16px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans TC',sans-serif;box-shadow:0 2px 8px rgba(62,155,142,.28)">＋ 新增</button>
       </div>
+      <div class="cat-filter" id="catFilter" style="display:none"></div>
       <div class="item-grid" id="invGrid"></div>
     </div>
   </div>
@@ -336,7 +341,7 @@ input:checked+.slider:before{transform:translateX(18px)}
     <button class="tab-btn active" id="tabInv"      onclick="switchTab('inv')">     <div class="tab-icon">📦</div>庫存</button>
     <button class="tab-btn"        id="tabRestock"  onclick="switchTab('restock')"> <div class="tab-icon">⚠️</div>待補貨<span class="tab-badge" id="restockBadge" style="display:none"></span></button>
     <button class="tab-btn"        id="tabSearch"   onclick="switchTab('search')">  <div class="tab-icon">🔍</div>查詢</button>
-    <button class="tab-btn"        id="tabSettings" onclick="switchTab('settings')"><div class="tab-icon">⚙️</div>設定</button>
+    <button class="tab-btn"        id="tabSettings" onclick="switchTab('settings')"><div class="tab-icon">⚙️</div>管理</button>
   </div>
 </div>
 
@@ -345,7 +350,6 @@ input:checked+.slider:before{transform:translateX(18px)}
   <div class="sheet">
     <div class="sheet-hdr">
       <span class="sheet-title" id="sheetTitle">新增商品</span>
-      <button class="sheet-close" onclick="closeSheet()">✕</button>
     </div>
     <div class="sheet-body" id="sheetBody"></div>
     <div class="sheet-ftr">
@@ -632,7 +636,7 @@ var DEFAULT_ITEMS=[
 //  State
 // ══════════════════════════════════
 var items=[],locations=[],categories=[],favs=[];
-var curLoc='',curZone='';
+var curLoc='',curZone='',curCat='all';
 var editId=null;
 
 function today(){return new Date().toISOString().slice(0,10);}
@@ -963,32 +967,50 @@ function itemCardHTML(it){
     +(function(){var db=dateBadge(it);return db?'<div class="date-badge '+db.c+'">'+db.t+'</div>':'';})()
     +'</div>';
 }
-function renderGrid(){
-  var grid=document.getElementById('invGrid');
-  var filtered=items.filter(function(it){
+function renderCatFilter(){
+  var box=document.getElementById('catFilter'); if(!box) return;
+  var inLoc=items.filter(function(it){
     if(it.location!==curLoc) return false;
     if(curZone&&it.zone!==curZone) return false;
     return true;
   });
+  if(inLoc.length===0){ box.style.display='none'; return; }
+  var counts={}; inLoc.forEach(function(it){ counts[it.cat]=(counts[it.cat]||0)+1; });
+  var known=new Set(categories.map(function(c){return c.id;}));
+  var restCount=inLoc.filter(function(it){return !known.has(it.cat);}).length;
+  // 目前選的類別若在此區域沒商品 → 退回全部
+  if(curCat!=='all' && curCat!=='__rest' && !counts[curCat]) curCat='all';
+  if(curCat==='__rest' && !restCount) curCat='all';
+  // 只有一個類別(全部)時不需要顯示篩選列
+  var catCount=Object.keys(counts).filter(function(k){return known.has(k);}).length + (restCount?1:0);
+  if(catCount<=1){ box.style.display='none'; return; }
+  box.style.display='flex';
+  var html='<button class="cat-chip'+(curCat==='all'?' active':'')+'" onclick="selectCat(\'all\')">全部（'+inLoc.length+'）</button>';
+  categories.forEach(function(cat){
+    if(!counts[cat.id]) return;
+    html+='<button class="cat-chip'+(curCat===cat.id?' active':'')+'" onclick="selectCat(\''+cat.id+'\')">'+(cat.icon||'')+' '+esc(cat.name)+'（'+counts[cat.id]+'）</button>';
+  });
+  if(restCount){ html+='<button class="cat-chip'+(curCat==='__rest'?' active':'')+'" onclick="selectCat(\'__rest\')">📦 其他（'+restCount+'）</button>'; }
+  box.innerHTML=html;
+}
+function selectCat(c){ curCat=c; renderCatFilter(); renderGrid(); }
+
+function renderGrid(){
+  var grid=document.getElementById('invGrid');
+  renderCatFilter();
+  var known=new Set(categories.map(function(c){return c.id;}));
+  var filtered=items.filter(function(it){
+    if(it.location!==curLoc) return false;
+    if(curZone&&it.zone!==curZone) return false;
+    if(curCat==='all') return true;
+    if(curCat==='__rest') return !known.has(it.cat);
+    return it.cat===curCat;
+  });
   if(filtered.length===0){
-    grid.innerHTML='<div class="empty-hint" style="grid-column:1/-1">此區域尚無商品</div>';
+    grid.innerHTML='<div class="empty-hint" style="grid-column:1/-1"><span class="eico">📦</span>此區域尚無商品<span class="esub">點右下「＋」開始建立庫存</span></div>';
     return;
   }
-  // 依「分類維護」順序分組；空類別不顯示；無類別歸「其他」
-  var html='';
-  categories.forEach(function(cat){
-    var group=filtered.filter(function(it){return it.cat===cat.id;});
-    if(!group.length) return;
-    html+='<div class="cat-group-head">'+(cat.icon||'')+' '+esc(cat.name)+'（'+group.length+'）</div>'
-        + group.map(itemCardHTML).join('');
-  });
-  // 無類別 / 找不到對應分類的 → 其他
-  var known=new Set(categories.map(function(c){return c.id;}));
-  var rest=filtered.filter(function(it){return !known.has(it.cat);});
-  if(rest.length){
-    html+='<div class="cat-group-head">📦 其他（'+rest.length+'）</div>'+rest.map(itemCardHTML).join('');
-  }
-  grid.innerHTML=html;
+  grid.innerHTML=filtered.map(itemCardHTML).join('');
 }
 
 // ══════════════════════════════════
@@ -1005,7 +1027,7 @@ function renderRestock(){
     // 3C 保固提醒(ww)/保固到期(we) 不顯示在待補貨，僅在查詢頁備註
   });
   var total=groups.expired.length+groups.low.length+groups.soon.length;
-  if(total===0){wrap.innerHTML='<div class="empty-hint">🎉 目前沒有待補貨項目！</div>';return;}
+  if(total===0){wrap.innerHTML='<div class="empty-hint"><span class="eico">🎉</span>目前沒有待補貨項目！<span class="esub">庫存都很充足</span></div>';return;}
   var html='';
   function sec(cls,icon,label,arr){
     if(!arr.length) return '';
@@ -1060,7 +1082,7 @@ function renderSearch(){
     return true;
   });
   var list=document.getElementById('searchList');
-  if(filtered.length===0){list.innerHTML='<div class="empty-hint">沒有符合的商品</div>';return;}
+  if(filtered.length===0){list.innerHTML='<div class="empty-hint"><span class="eico">🔍</span>沒有符合的商品<span class="esub">換個關鍵字試試</span></div>';return;}
   list.innerHTML=filtered.map(function(it){
     var st=getStatus(it);
     var rc={expired:'expired',low:'low',soon:'soon',ww:'ww',we:'expired',ok:'',ok3c:''}[st.type]||'';
@@ -1716,6 +1738,10 @@ function deleteItemById(id){
 // ══════════════════════════════════
 //  Tab
 // ══════════════════════════════════
+function goCalendar(){
+  var u=''; try{ u=localStorage.getItem('cal_auth')||''; }catch(e){}
+  location.href='https://handyassist-system.github.io/My-Schedule/'+(u?('#u='+encodeURIComponent(u)):'');
+}
 function switchTab(tab){
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
   document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
@@ -1750,6 +1776,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeSheet()
 //  Init
 // ══════════════════════════════════
 var _sharedLogin=null; try{ _sharedLogin=localStorage.getItem('cal_auth'); }catch(e){}
+try{ var _hm=(location.hash||'').match(/[#&]u=([^&]+)/); if(_hm&&_hm[1]){ var _hu=decodeURIComponent(_hm[1]); if(_hu){ _sharedLogin=_hu; try{ localStorage.setItem('cal_auth',_hu); }catch(e){} } } }catch(e){}  // 從網址接收登入身分(跨App保險)
 try{ if(location.search.indexOf('code=0430')>=0){ localStorage.setItem(AUTH_KEY,'1'); _sharedLogin='0430'; } }catch(e){}  // 隱藏後路(自己用)
 if(localStorage.getItem(AUTH_KEY)==='1' || _sharedLogin){
   document.getElementById('loginPage').style.display='none';
